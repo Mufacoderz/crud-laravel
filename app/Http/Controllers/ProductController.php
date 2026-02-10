@@ -2,59 +2,56 @@
 
 namespace App\Http\Controllers;
 
-// Mengimpor Model Product agar controller bisa berinteraksi dengan tabel products
+//import model product
 use App\Models\Product;
 
-// Digunakan sebagai tipe return untuk method yang mengembalikan view
+//import return type View
 use Illuminate\View\View;
 
-// Digunakan sebagai tipe return untuk method yang melakukan redirect
+//import return type redirectResponse
+use Illuminate\Http\Request;
+
+//import Http Request
 use Illuminate\Http\RedirectResponse;
 
-// Digunakan untuk menangani data request dari form (input user)
-use Illuminate\Http\Request;
+//import Facades Storage
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
     /**
-     * Menampilkan daftar produk
+     * index
      *
-     * @return View
+     * @return void
      */
     public function index() : View
     {
-        // Mengambil semua data produk dari database
-        // latest() -> urutkan berdasarkan data terbaru
-        // paginate(10) -> tampilkan 10 data per halaman
+        //get all products
         $products = Product::latest()->paginate(10);
 
-        // Mengirim data $products ke view products.index
-        // compact('products') sama dengan ['products' => $products]
+        //render view with products
         return view('products.index', compact('products'));
     }
 
     /**
-     * Menampilkan halaman form tambah produk
+     * create
      *
      * @return View
      */
     public function create(): View
     {
-        // Menampilkan view form create product
         return view('products.create');
     }
 
     /**
-     * Menyimpan data produk ke database
+     * store
      *
-     * @param  Request $request -> menangkap semua data input dari form
+     * @param  mixed $request
      * @return RedirectResponse
      */
-
-    // method store ini diguakan utk proses insert ke db
     public function store(Request $request): RedirectResponse
     {
-        // Validasi data yang dikirim dari form
+        //validate form
         $request->validate([
             'image'         => 'required|image|mimes:jpeg,jpg,png|max:2048',
             'title'         => 'required|min:5',
@@ -63,28 +60,21 @@ class ProductController extends Controller
             'stock'         => 'required|numeric'
         ]);
 
-        // Mengambil file gambar dari request
+        //upload image
         $image = $request->file('image');
-        // Menyimpan gambar ke folder storage/app/products
-        // hashName() membuat nama file unik otomatis
-        $image->storeAs('products', $image->hashName());
+        $image->storeAs('public/products', $image->hashName());
 
-        // Menyimpan data produk ke database menggunakan Eloquent
+        //create product
         Product::create([
-            // Menyimpan nama file gambar ke kolom image
             'image'         => $image->hashName(),
-            // Mengambil input title dari form
             'title'         => $request->title,
             'description'   => $request->description,
             'price'         => $request->price,
             'stock'         => $request->stock
         ]);
 
-        // Redirect ke halaman index products
-        // with() digunakan untuk mengirim pesan flash ke session
-        return redirect()
-            ->route('products.index')
-            ->with(['success' => 'Data Berhasil Disimpan!']);
+        //redirect to index
+        return redirect()->route('products.index')->with(['success' => 'Data Berhasil Disimpan!']);
     }
 
     /**
@@ -98,8 +88,77 @@ class ProductController extends Controller
         //get product by ID
         $product = Product::findOrFail($id);
 
-
         //render view with product
         return view('products.show', compact('product'));
+    }
+
+    /**
+     * edit
+     *
+     * @param  mixed $id
+     * @return View
+     */
+    public function edit(string $id): View
+    {
+        //get product by ID
+        $product = Product::findOrFail($id);
+
+        //render view with product
+        return view('products.edit', compact('product'));
+    }
+
+    /**
+     * update
+     *
+     * @param  mixed $request
+     * @param  mixed $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): RedirectResponse
+    {
+        //validate form
+        $request->validate([
+            'image'         => 'image|mimes:jpeg,jpg,png|max:2048',
+            'title'         => 'required|min:5',
+            'description'   => 'required|min:10',
+            'price'         => 'required|numeric',
+            'stock'         => 'required|numeric'
+        ]);
+
+        //get product by ID
+        $product = Product::findOrFail($id);
+
+        //check if image is uploaded
+        if ($request->hasFile('image')) {
+
+						//delete old image
+            Storage::delete('products/'.$product->image);
+
+            //upload new image
+            $image = $request->file('image');
+            $image->storeAs('products', $image->hashName());
+
+            //update product with new image
+            $product->update([
+                'image'         => $image->hashName(),
+                'title'         => $request->title,
+                'description'   => $request->description,
+                'price'         => $request->price,
+                'stock'         => $request->stock
+            ]);
+
+        } else {
+
+            //update product without image
+            $product->update([
+                'title'         => $request->title,
+                'description'   => $request->description,
+                'price'         => $request->price,
+                'stock'         => $request->stock
+            ]);
+        }
+
+        //redirect to index
+        return redirect()->route('products.index')->with(['success' => 'Data Berhasil Diubah!']);
     }
 }

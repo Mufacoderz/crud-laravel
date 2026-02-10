@@ -18,6 +18,7 @@
 
                             @csrf
                             @method('PUT')
+                            {{-- wajib pake method put buat menandakan ini edit data --}}
 
                             <div class="form-group mb-3">
                                 <label class="font-weight-bold">IMAGE</label>

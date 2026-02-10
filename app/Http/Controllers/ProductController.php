@@ -86,4 +86,20 @@ class ProductController extends Controller
             ->route('products.index')
             ->with(['success' => 'Data Berhasil Disimpan!']);
     }
+
+    /**
+     * show
+     *
+     * @param  mixed $id
+     * @return View
+     */
+    public function show(string $id): View
+    {
+        //get product by ID
+        $product = Product::findOrFail($id);
+
+
+        //render view with product
+        return view('products.show', compact('product'));
+    }
 }

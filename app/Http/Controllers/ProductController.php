@@ -50,6 +50,8 @@ class ProductController extends Controller
      * @param  Request $request -> menangkap semua data input dari form
      * @return RedirectResponse
      */
+
+    // method store ini diguakan utk proses insert ke db
     public function store(Request $request): RedirectResponse
     {
         // Validasi data yang dikirim dari form
@@ -63,7 +65,6 @@ class ProductController extends Controller
 
         // Mengambil file gambar dari request
         $image = $request->file('image');
-
         // Menyimpan gambar ke folder storage/app/products
         // hashName() membuat nama file unik otomatis
         $image->storeAs('products', $image->hashName());

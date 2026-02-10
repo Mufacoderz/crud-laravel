@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Data Products - SantriKoding.com</title>
+    <title>Data Products - Ujang store</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body style="background: lightgray">
@@ -15,7 +15,7 @@
                 <div>
                     <h3 class="text-center my-4">Tutorial Laravel 12 untuk Pemula</h3>
                     <h5 class="text-center">
-                        <a href="https://santrikoding.com">www.santrikoding.com</a>
+                        <a href="https://santrikoding.com">Ujang Store</a>
                     </h5>
                     <hr>
                 </div>

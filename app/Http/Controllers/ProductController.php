@@ -1,70 +1,79 @@
 <?php
 
 namespace App\Http\Controllers;
+// Namespace = lokasi class ini di struktur folder Laravel
 
-//import model product
+// import model Product (agar bisa akses tabel products)
 use App\Models\Product;
 
-//import return type View
+// import tipe return View (biar method bisa ditandai return View)
 use Illuminate\View\View;
 
-//import return type redirectResponse
+// import Request (untuk ambil data dari form)
 use Illuminate\Http\Request;
 
-//import Http Request
+// import RedirectResponse (untuk redirect setelah proses)
 use Illuminate\Http\RedirectResponse;
 
-//import Facades Storage
+// import Storage (untuk hapus file gambar dari folder storage)
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
     /**
-     * index
-     *
-     * @return void
+     * METHOD: index()
+     * Menampilkan semua data produk
      */
     public function index() : View
     {
-        //get all products
+        // ambil semua data product, urut dari terbaru
+        // paginate(10) artinya tampilkan 10 data per halaman
         $products = Product::latest()->paginate(10);
 
-        //render view with products
+        // kirim data $products ke view products.index
         return view('products.index', compact('products'));
     }
 
     /**
-     * create
-     *
-     * @return View
+     * METHOD: create()
+     * Menampilkan halaman form tambah produk
      */
     public function create(): View
     {
+        // hanya menampilkan halaman form
         return view('products.create');
     }
 
     /**
-     * store
-     *
-     * @param  mixed $request
-     * @return RedirectResponse
+     * METHOD: store()
+     * Menyimpan data baru ke database
      */
     public function store(Request $request): RedirectResponse
     {
-        //validate form
+        // validasi input form
         $request->validate([
+            // wajib ada file gambar, harus jpg/png, max 2MB
             'image'         => 'required|image|mimes:jpeg,jpg,png|max:2048',
+
+            // title minimal 5 karakter
             'title'         => 'required|min:5',
+
+            // description minimal 10 karakter
             'description'   => 'required|min:10',
+
+            // price & stock harus angka
             'price'         => 'required|numeric',
             'stock'         => 'required|numeric'
         ]);
 
-        //upload image
+        // ambil file gambar dari form
         $image = $request->file('image');
+
+        // simpan gambar ke folder storage/app/public/products
+        // hashName() = nama file random agar tidak bentrok
         $image->storeAs('public/products', $image->hashName());
 
-        //create product
+        // simpan data ke database
         Product::create([
             'image'         => $image->hashName(),
             'title'         => $request->title,
@@ -73,50 +82,45 @@ class ProductController extends Controller
             'stock'         => $request->stock
         ]);
 
-        //redirect to index
-        return redirect()->route('products.index')->with(['success' => 'Data Berhasil Disimpan!']);
+        // redirect ke halaman index + kirim pesan sukses
+        return redirect()->route('products.index')
+                        ->with(['success' => 'Data Berhasil Disimpan!']);
     }
 
     /**
-     * show
-     *
-     * @param  mixed $id
-     * @return View
+     * METHOD: show()
+     * Menampilkan detail 1 produk
      */
     public function show(string $id): View
     {
-        //get product by ID
+        // cari product berdasarkan id
+        // kalau tidak ketemu → otomatis error 404
         $product = Product::findOrFail($id);
 
-        //render view with product
+        // kirim ke halaman show
         return view('products.show', compact('product'));
     }
 
     /**
-     * edit
-     *
-     * @param  mixed $id
-     * @return View
+     * METHOD: edit()
+     * Menampilkan form edit produk
      */
     public function edit(string $id): View
     {
-        //get product by ID
+        // ambil data product berdasarkan id
         $product = Product::findOrFail($id);
 
-        //render view with product
+        // kirim ke halaman edit
         return view('products.edit', compact('product'));
     }
 
     /**
-     * update
-     *
-     * @param  mixed $request
-     * @param  mixed $id
-     * @return RedirectResponse
+     * METHOD: update()
+     * Mengupdate data produk
      */
     public function update(Request $request, $id): RedirectResponse
     {
-        //validate form
+        // validasi (gambar tidak wajib saat update)
         $request->validate([
             'image'         => 'image|mimes:jpeg,jpg,png|max:2048',
             'title'         => 'required|min:5',
@@ -125,20 +129,23 @@ class ProductController extends Controller
             'stock'         => 'required|numeric'
         ]);
 
-        //get product by ID
+        // ambil data product dari database
         $product = Product::findOrFail($id);
 
-        //check if image is uploaded
+        // cek apakah user upload gambar baru
         if ($request->hasFile('image')) {
 
-						//delete old image
+            // hapus gambar lama dari storage
+            // CATATAN: ini path-nya harus sama dengan saat upload
             Storage::delete('products/'.$product->image);
 
-            //upload new image
+            // ambil file baru
             $image = $request->file('image');
+
+            // simpan file baru
             $image->storeAs('products', $image->hashName());
 
-            //update product with new image
+            // update semua data termasuk gambar
             $product->update([
                 'image'         => $image->hashName(),
                 'title'         => $request->title,
@@ -149,7 +156,8 @@ class ProductController extends Controller
 
         } else {
 
-            //update product without image
+            // jika tidak upload gambar
+            // update data selain gambar
             $product->update([
                 'title'         => $request->title,
                 'description'   => $request->description,
@@ -158,28 +166,28 @@ class ProductController extends Controller
             ]);
         }
 
-        //redirect to index
-        return redirect()->route('products.index')->with(['success' => 'Data Berhasil Diubah!']);
+        // kembali ke halaman index
+        return redirect()->route('products.index')
+                        ->with(['success' => 'Data Berhasil Diubah!']);
     }
 
     /**
-     * destroy
-     *
-     * @param  mixed $id
-     * @return RedirectResponse
+     * METHOD: destroy()
+     * Menghapus produk
      */
     public function destroy($id): RedirectResponse
     {
-        //get product by ID
+        // ambil data product
         $product = Product::findOrFail($id);
 
-        //delete image
-        Storage::delete('products/'. $product->image);
+        // hapus gambar dari storage
+        Storage::delete('products/'.$product->image);
 
-        //delete product
+        // hapus data dari database
         $product->delete();
 
-        //redirect to index
-        return redirect()->route('products.index')->with(['success' => 'Data Berhasil Dihapus!']);
+        // redirect kembali ke index
+        return redirect()->route('products.index')
+                        ->with(['success' => 'Data Berhasil Dihapus!']);
     }
 }
